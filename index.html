@@ -280,7 +280,7 @@
 
             document.getElementById("pageTitle").innerText = `${name} 리더십 평가 (${currentPage + 1}/4)`;
             document.getElementById("progressFill").style.width = `${(currentPage / 4) * 100}%`;
-            document.getElementById("prevBtn").style.visibility = currentPage === 0 ? "hidden" : "visible";
+            document.getElementById("prevBtn").innerText = currentPage === 0 ? "처음으로" : "이전";
             document.getElementById("nextBtn").innerText = currentPage === 3 ? "결과 보기" : "다음";
 
             pageQuestions.forEach((q, i) => {
@@ -326,6 +326,9 @@
             if (currentPage > 0) {
                 currentPage--;
                 renderPage();
+            } else {
+                document.getElementById("step2").classList.add("hidden");
+                document.getElementById("step1").classList.remove("hidden");
             }
         }
 
