@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리더십 평가 | Jin’s Leadership</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            color: #222;
+        }
+
+        .container {
+            max-width: 720px;
+            margin: 60px auto;
+            background: #fff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 22px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        p {
+            line-height: 1.6;
+            color: #666;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            margin: 20px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+
+        .question-item {
+            margin-bottom: 35px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 20px;
+        }
+
+        .question-text {
+            font-size: 17px;
+            font-weight: 500;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .scale-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .scale-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .scale-item input {
+            margin-bottom: 8px;
+            cursor: pointer;
+            width: 18px;
+            height: 18px;
+        }
+
+        .scale-label {
+            font-size: 11px;
+            color: #888;
+            text-align: center;
+            height: 30px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-next {
+            background: #111;
+            color: #fff;
+        }
+
+        .btn-prev {
+            background: #eee;
+            color: #444;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #007AFF;
+            width: 0%;
+            transition: 0.3s;
+        }
+
+        .result-box {
+            background: #f9f9f9;
+            padding: 25px;
+            border-radius: 10px;
+            margin-top: 20px;
+            border: 1px solid #eee;
+        }
+
+        .type-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #007AFF;
+            color: #fff;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px auto;
+        }
+
+        footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+    <div class="container">
+        <section id="step1">
+            <h1>리더십 평가</h1>
+            <p>본 검사는 리더의 역량과 유형을 분석하는 도구입니다.<br>
+                <strong>총 20개 문항</strong>으로 구성되어 있으며, 약 <strong>3분 정도</strong> 소요됩니다.
+            </p>
+            <input type="text" id="leaderName" placeholder="평가할 리더의 이름을 입력하세요"
+                onkeypress="if(event.keyCode==13) startTest()">
+            <button class="btn-next" onclick="startTest()">평가 시작하기</button>
+        </section>
+
+        <section id="step2" class="hidden">
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <h2 id="pageTitle"></h2>
+            <form id="testForm"></form>
+            <div class="btn-group">
+                <button id="prevBtn" class="btn-prev" onclick="prevPage()">이전</button>
+                <button id="nextBtn" class="btn-next" onclick="nextPage()">다음</button>
+            </div>
+        </section>
+
+        <section id="step3" class="hidden">
+            <h2>리더십 분석 결과</h2>
+            <div class="result-box">
+                <div id="typeBadge" class="type-badge"></div>
+                <h3 id="resultName" style="margin:5px 0 15px 0;"></h3>
+                <p><strong>리더십 총점:</strong> <span id="totalScore"
+                        style="font-size:20px; color:#007AFF; font-weight:bold;"></span> / 100</p>
+                <p id="scoreDesc" style="color:#333; font-weight:500;"></p>
+
+                <div class="chart-container">
+                    <canvas id="radarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="result-box">
+                <h3 id="typeTitle" style="margin-top:0; color:#007AFF;"></h3>
+                <h4 style="margin: 0 0 10px 0; color: #555;">유형별 상세 피드백</h4>
+                <p id="typeDesc" style="white-space: pre-wrap; color:#444;"></p>
+            </div>
+
+            <button class="btn-prev" onclick="location.reload()" style="margin-top:20px;">다시 테스트하기</button>
+
+            <footer>
+                이 리더십 평가는 <strong>진스기획 (Jin’s Leadership)</strong>에서 제작되었습니다.<br>
+                © Jin’s Leadership. All rights reserved.
+            </footer>
+        </section>
+    </div>
+
+    <script>
+        const allQuestions = [
+            "팀원들의 능력과 팀워크를 잘 파악하고 있는가?", "팀이 처한 상황과 환경을 잘 알고 있는가?", "조직이 나아가야 할 방향(목표)을 제시하는가?", "목표 달성을 위해 적절한 업무 분장(포메이션)을 하는가?", "팀원들이 기꺼이 따르고 싶어 하는 인간적인 매력이 있는가?", "팀원들을 업무에 몰입 시키고 행동하게 만드는 추진력이 있는가?",
+            "리더의 능력이 현재 팀 규모보다 더 큰 조직을 이끌기에 충분한가?", "리더의 능력이 팀에게 주어질 다양한 일들을 감당할 수 있는가?",
+            "감정에 치우치지 않고 이성적으로 행동하는가?", "비 윤리적이거나 비도덕적 행위를 하지 않는가?", "팀원들이 성과를 낼 수 있다고 믿는가?", "팀원들 모두와 적절한 거리를 두면서 관계를 유지하는가?", "자신에게 주어진 권한만큼 책임의 무게를 짊어지는가?",
+            "사람들의 다양성(개성, 가치관)을 진심으로 이해하고 존중하는가?", "세상의 변화와 트렌드를 받아들일 수 있는가?", "신세대와 구세대를 모두 아우를 수 있는 포용력을 가지고 있는가?", "눈에 보이는 실적뿐 아니라 팀의 사기와 분위기를 잘 읽는가?", "팀원들의 능력을 지속적으로 평가하고 조언하는가?", "유사시 문제점을 파악하고 해결책을 찾는가?", "고정관념에 갇히지 않고 유연한 사고를 하는가?"
+        ];
+
+        const typeFeedbacks = {
+            "LBAW": { title: "진정한 리더", desc: "역량, 규모, 에너지, 이해도 모두 완벽한 리더로 더 큰 조직을 맡아야 하며 조직의 생명을 연장합니다.\n피드백: \"이순신의 후예입니다! 지금처럼 팀원들의 성장을 독려하며 비전을 실현하세요.\"" },
+            "LBAN": { title: "추진력 있는 지시형 리더", desc: "리더십 능력이 있고 큰 조직을 이끌 수 있는 긍정적인 리더 입니다.\n피드백: \"하지만 변화와 공감이 좀 더 필요합니다. 팀원들과 커피 한 잔하며 소통의 시간을 가져보세요.\"" },
+            "LBDW": { title: "성과 중심의 야심 가득한 리더", desc: "리더십 능력도 있고 세상에 대한 이해도도 높습니다. 다만 부정적인 기운이 있습니다.\n피드백: \"성과도 좋지만 팀원들이 지칠 수 있습니다. 리더의 권한만큼 책임의 무게를 더 진중하게 생각하고 희생해야 할 것 같습니다.\"" },
+            "LBDN": { title: "실력 있는 권위주의적 리더", desc: "리더십 능력은 탁월하나 시야가 좁고 조직에 독을 전파할 수 있습니다.\n피드백: \"조직의 기운을 나쁘게 만들고 생명을 짧게 만듭니다. 더 성장하길 원한다면 본인보다 구성원과 조직을 위해 일해야 합니다.\"" },
+            "LSAW": { title: "안정적인 운영의 한계 있는 리더", desc: "기초 리더십은 준수합니다. 너무 좋아하는 것에만 집착하려고 합니다.\n피드백: \"리더로서 모든 면을 갖췄는데 더 큰 변화와 도전을 감당할 수 있는 그릇을 키워보세요.\"" },
+            "LSAN": { title: "원칙 고수의 보수적인 리더", desc: "안정적인 운영은 잘하나 작은 것에 집착하거나 변화를 두려워할 수 있습니다.\n피드백: \"고정관념에 갇혀 다양성을 포용하지 못합니다. 올드한 사고방식에 갇혀 있을 수 있습니다.\"" },
+            "LSDW": { title: "감정에 치우친 부정적 리더", desc: "소규모 조직에서 부정적인 에너지를 내뿜으며 팀원들을 힘들게 합니다.\n피드백: “리더의 그릇을 키워야합니다. 그리고 본인의 나쁜 생각, 나쁜 기운을 없애야 합니다.\"" },
+            "LSDN": { title: "정적이고 속 좁은 리더", desc: "리더로서 기본적 소양은 있으나 조직에 나쁜 영향을 미치고 꼰대 이미지가 강하거나 우유부단 합니다.\n피드백: \"리더보다는 전문가로 사는 것이 조직과 본인 모두에게 나은 선택일 수 있습니다.\"" },
+            "FBAW": { title: "전략적 책사형 팔로워", desc: "큰 조직에서 변화를 잘 읽고 긍정적으로 기여하는 핵심 인재입니다.\n피드백: \"리더를 보좌하는 최고의 책사입니다. 본인의 전략적 전문성을 더 키워보세요.\"" },
+            "FBAN": { title: "전문성 높은 고집 센 팔로워", desc: "실행력은 좋으나 새로운 트렌드나 타인의 의견 수용도가 낮습니다.\n피드백: \"본인의 업무 전문성은 높으나 유연한 사고가 부족합니다. 세대의 변화를 읽으려 노력하세요.\"" },
+            "FBDW": { title: "실리 추구형 야심가 팔로워", desc: "큰 조직의 시스템을 이용해 본인의 이익을 챙기거나 에너지를 깎아먹습니다.\n피드백: \"주어진 혜택이나 권한만 누리려고 하지 말고 책임감을 가져야 합니다. 조직에 긍정적인 에너지를 보태주세요.\"" },
+            "FBDN": { title: "고집 강한 비판적 팔로워", desc: "큰 조직 내에서 부정적인 분위기를 조성하며 고집이 강한 스타일입니다.\n피드백: \"동료들의 사기를 꺾고 있지는 않나요? 객관적으로 자신을 조망하는 능력이 필요합니다.\"" },
+            "FSAW": { title: "긍정적인 분위기 메이커", desc: "리더십은 부족해도 긍정적 에너지로 팀 분위기를 밝게 만듭니다.\n피드백: \"팀의 비타민 같은 존재입니다! 다만, 성과를 낼 수 있다는 확신과 추진력을 더 보강해 보세요.\"" },
+            "FSAN": { title: "충실한 원칙주의 팔로워", desc: "맡은 바 임무에 충실하며 안정적인 환경에서 최선을 다합니다.\n피드백: \"충실한 실행자입니다. 시야를 조금 더 넓혀 조직의 전체 방향성을 이해하려 노력해 보세요.\"" },
+            "FSDW": { title: "리더의 가이드가 필요한 팔로워", desc: "마음은 있으나 역량이 부족하거나 상황이 따라주지 않는 유형입니다.\n피드백: \"자신감을 가지세요! 리더에게 구체적인 업무 분장(포메이션)을 요청해 보세요.\"" },
+            "FSDN": { title: "조직이 안맞는 팔로워", desc: "전체적인 리더십 역량도 부족하고 부정적이며 변화에도 관심없는 유형입니다.\n피드백: \"혹시 부정적인 꼰대는 아닌가요? 조직 내에서 본인이 기여할 수 있는  일부터 착실히 찾아봐야할 것 같아요.\"" }
+        };
+
+        let currentPage = 0;
+        const questionsPerPage = 5;
+        let userAnswers = new Array(allQuestions.length).fill(null);
+
+        function startTest() {
+            const name = document.getElementById("leaderName").value.trim();
+            if (!name) return alert("리더의 이름을 입력해주세요.");
+            document.getElementById("step1").classList.add("hidden");
+            document.getElementById("step2").classList.remove("hidden");
+            renderPage();
+        }
+
+        function renderPage() {
+            const name = document.getElementById("leaderName").value;
+            const form = document.getElementById("testForm");
+            form.innerHTML = "";
+
+            const start = currentPage * questionsPerPage;
+            const end = start + questionsPerPage;
+            const pageQuestions = allQuestions.slice(start, end);
+
+            document.getElementById("pageTitle").innerText = `${name} 리더십 평가 (${currentPage + 1}/4)`;
+            document.getElementById("progressFill").style.width = `${(currentPage / 4) * 100}%`;
+            document.getElementById("prevBtn").style.visibility = currentPage === 0 ? "hidden" : "visible";
+            document.getElementById("nextBtn").innerText = currentPage === 3 ? "결과 보기" : "다음";
+
+            pageQuestions.forEach((q, i) => {
+                const qIdx = start + i;
+                const div = document.createElement("div");
+                div.className = "question-item";
+                div.innerHTML = `
+                <span class="question-text">${qIdx + 1}. ${q}</span>
+                <div class="scale-group">
+                    ${[5, 4, 3, 2, 1].map(v => {
+                    const labels = ["", "매우 그렇지 않다", "그렇지 않다", "보통이다", "그렇다", "매우 그렇다"];
+                    return `
+                        <label class="scale-item">
+                            <input type="radio" name="q${qIdx}" value="${v}" ${userAnswers[qIdx] == v ? 'checked' : ''} required>
+                            <span style="font-weight:bold; margin-bottom:4px;">${v}</span>
+                            <span class="scale-label">${labels[v]}</span>
+                        </label>`;
+                }).join("")}
+                </div>
+            `;
+                form.appendChild(div);
+            });
+            window.scrollTo(0, 0);
+        }
+
+        function nextPage() {
+            const start = currentPage * questionsPerPage;
+            for (let i = 0; i < questionsPerPage; i++) {
+                const checked = document.querySelector(`input[name="q${start + i}"]:checked`);
+                if (!checked) return alert("현재 페이지의 모든 문항에 응답해주세요.");
+                userAnswers[start + i] = Number(checked.value);
+            }
+
+            if (currentPage < 3) {
+                currentPage++;
+                renderPage();
+            } else {
+                showResult();
+            }
+        }
+
+        function prevPage() {
+            if (currentPage > 0) {
+                currentPage--;
+                renderPage();
+            }
+        }
+
+        let radarChartInstance = null;
+
+        function showResult() {
+            const total = userAnswers.reduce((a, b) => a + b, 0);
+            const avg = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+            // Categories
+            const score1 = avg(userAnswers.slice(0, 6)); // 리더십 필수 역량
+            const score2 = avg(userAnswers.slice(6, 8)); // 리더십 사이즈
+            const score3 = avg(userAnswers.slice(8, 13)); // 조직 에너지
+            const score4 = avg(userAnswers.slice(13, 20)); // 변화와 다양성
+
+            const L = score1 >= 3.5 ? "L" : "F";
+            const B = score2 >= 3.5 ? "B" : "S";
+            const A = score3 >= 3.5 ? "A" : "D";
+            const W = score4 >= 3.5 ? "W" : "N";
+            const type = L + B + A + W;
+
+            document.getElementById("step2").classList.add("hidden");
+            document.getElementById("step3").classList.remove("hidden");
+
+            const name = document.getElementById("leaderName").value;
+            document.getElementById("resultName").innerText = `${name} 님의 분석 리포트`;
+            document.getElementById("totalScore").innerText = total;
+            document.getElementById("typeBadge").innerText = type;
+
+            let scoreTitle = "";
+            if (total >= 83) scoreTitle = "탁월한 리더";
+            else if (total >= 68) scoreTitle = "유능한 리더";
+            else if (total >= 53) scoreTitle = "성장형 인재";
+            else if (total >= 38) scoreTitle = "안정형 팔로워";
+            else scoreTitle = "비조직형 인간";
+
+            document.getElementById("scoreDesc").innerText = scoreTitle;
+            const feedback = typeFeedbacks[type] || { title: "분석 중", desc: "상세 데이터 분석이 필요합니다." };
+
+            document.getElementById("typeTitle").innerText = `유형: ${feedback.title}`;
+            document.getElementById("typeDesc").innerText = feedback.desc;
+
+            // Radar Chart implementation
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            if (radarChartInstance) radarChartInstance.destroy();
+
+            radarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['리더십 필수 역량', '리더십 사이즈', '조직 에너지', '변화와 다양성'],
+                    datasets: [{
+                        label: '평가 지표',
+                        data: [score1, score2, score3, score4],
+                        backgroundColor: 'rgba(0, 122, 255, 0.2)',
+                        borderColor: 'rgba(0, 122, 255, 1)',
+                        borderWidth: 2,
+                        pointBackgroundColor: 'rgba(0, 122, 255, 1)'
+                    }]
+                },
+                options: {
+                    scales: {
+                        r: {
+                            angleLines: { display: true },
+                            suggestedMin: 1,
+                            suggestedMax: 5,
+                            ticks: { stepSize: 1, display: false }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+
+</html>
